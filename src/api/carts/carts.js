@@ -1,9 +1,24 @@
 const express = require("express");
 const fs = require("fs");
 const router = express.Router();
+const multer = require("multer");
 
 const cartFilePath = "./api/data/carrito.json";
 const productsFilePath = "./api/data/productos.json";
+const uploadDir = "./public/uploads";
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    const fileExtension = file.originalname.split(".").pop();
+    cb(null, file.fieldname + "-" + uniqueSuffix + "." + fileExtension);
+  },
+});
+
+const upload = multer({ storage });
 
 const getProducts = () => JSON.parse(fs.readFileSync(productsFilePath));
 const getCart = () => JSON.parse(fs.readFileSync(cartFilePath));
@@ -56,6 +71,18 @@ router.post("/:cid/product/:pid", (req, res) => {
       saveCart(getCart());
       res.json(cart);
     }
+  }
+});
+
+router.post("/:cid/image", upload.single("image"), (req, res) => {
+  const cartId = req.params.cid;
+  const cart = getCart().find((c) => c.id == cartId);
+  if (!cart) {
+    res.status(404).json({ error: `Cart with ID ${cartId} not found` });
+  } else {
+    cart.image = req.file.filename;
+    saveCart(getCart());
+    res.json(cart);
   }
 });
 

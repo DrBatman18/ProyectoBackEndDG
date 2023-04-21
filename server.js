@@ -1,16 +1,18 @@
-const express = require('express');
+const express = require("express");
+const multer = require("multer");
+const cors = require("cors");
+const productsRouter = require("./src/api/routes/products");
+const cartsRouter = require("./src/api/routes/carts");
+
 const app = express();
+const upload = multer({ dest: "uploads/" });
 
-const productsRouter = require('./src/api/products/products');
-const cartsRouter = require('./src/api/carts/carts');
-
-const PORT = 8080;
-
+app.use(cors());
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
-app.use('/api/products', productsRouter);
-app.use('/api/carts', cartsRouter);
+app.use("/api/products", upload.single("image"), productsRouter);
+app.use("/api/carts", cartsRouter);
 
-app.listen(PORT, () => {
-    console.log(`Server listening on port ${PORT}`);
-});
+const port = 8080;
+app.listen(port, () => console.log(`Server listening on port ${port}`));
