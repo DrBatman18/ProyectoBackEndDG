@@ -1,32 +1,25 @@
 const express = require("express");
 const fs = require("fs");
-const multer = require("multer");
 const router = express.Router();
+const multer = require("multer");
+
+const upload = multer({ dest: "public/images/" }); // Directorio donde se guardarán las imágenes
 
 const productsFilePath = "./api/data/productos.json";
 const getProducts = () => JSON.parse(fs.readFileSync(productsFilePath));
 const saveProducts = (products) => fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2));
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, "./public/uploads/");
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
-    cb(null, file.fieldname + "-" + uniqueSuffix + "." + file.originalname.split(".").pop());
-  },
-});
-
-const upload = multer({ storage });
-
+// Obtener todos los productos
 router.get("/", (req, res) => {
   const products = getProducts();
   res.json(products);
 });
 
+// Obtener un producto por ID
 router.get("/:id", (req, res) => {
   const productId = req.params.id;
-  const product = getProducts().find((p) => p.id == productId);
+  const products = getProducts();
+  const product = products.find((p) => p.id == productId);
   if (product) {
     res.json(product);
   } else {
@@ -34,19 +27,18 @@ router.get("/:id", (req, res) => {
   }
 });
 
+// Agregar un producto
 router.post("/", upload.single("image"), (req, res) => {
-  const { name, price, description } = req.body;
-  if (!name || !price || !description) {
-    res.status(400).json({ error: "The fields 'name', 'price', and 'description' are required" });
+  const { name, price } = req.body;
+  if (!name || !price) {
+    res.status(400).json({ error: "The fields 'name' and 'price' are required" });
   } else {
     const products = getProducts();
-    const lastProductId = products.length > 0 ? products[products.length - 1].id : 0;
     const newProduct = {
-      id: lastProductId + 1,
+      id: Date.now().toString(),
       name,
-      price,
-      description,
-      image: req.file ? req.file.filename : null,
+      price: parseFloat(price),
+      image: req.file ? req.file.filename : null, // Agregar la ruta de la imagen al producto
     };
     products.push(newProduct);
     saveProducts(products);
@@ -54,24 +46,19 @@ router.post("/", upload.single("image"), (req, res) => {
   }
 });
 
-router.put("/:id", upload.single("image"), (req, res) => {
+// Actualizar un producto por ID
+router.put("/:id", (req, res) => {
   const productId = req.params.id;
-  const { name, price, description } = req.body;
-  if (!name || !price || !description) {
-    res.status(400).json({ error: "The fields 'name', 'price', and 'description' are required" });
+  const { name, price } = req.body;
+  if (!name || !price) {
+    res.status(400).json({ error: "The fields 'name' and 'price' are required" });
   } else {
     const products = getProducts();
     const productIndex = products.findIndex((p) => p.id == productId);
     if (productIndex === -1) {
       res.status(404).json({ error: `Product with ID ${productId} not found` });
     } else {
-      const updatedProduct = {
-        ...products[productIndex],
-        name,
-        price,
-        description,
-        image: req.file ? req.file.filename : products[productIndex].image,
-      };
+      const updatedProduct = { ...products[productIndex], name, price: parseFloat(price) };
       products[productIndex] = updatedProduct;
       saveProducts(products);
       res.json(updatedProduct);
@@ -79,6 +66,7 @@ router.put("/:id", upload.single("image"), (req, res) => {
   }
 });
 
+// Eliminar un producto por ID
 router.delete("/:id", (req, res) => {
   const productId = req.params.id;
   const products = getProducts();
@@ -93,4 +81,5 @@ router.delete("/:id", (req, res) => {
 });
 
 module.exports = router;
+
 
