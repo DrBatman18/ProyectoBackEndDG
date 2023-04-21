@@ -5,8 +5,8 @@ const multer = require("multer");
 const router = express.Router();
 const upload = multer({ dest: "public/images" });
 
-const cartFilePath = "./api/data/carrito.json";
-const productsFilePath = "./api/data/productos.json";
+const cartFilePath = "./src/api/data/carrito.json";
+const productsFilePath = "./src/api/data/productos.json";
 
 const getProducts = () => JSON.parse(fs.readFileSync(productsFilePath));
 const getCart = () => JSON.parse(fs.readFileSync(cartFilePath));

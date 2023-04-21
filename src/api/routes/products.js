@@ -5,7 +5,7 @@ const multer = require("multer");
 
 const upload = multer({ dest: "public/images/" }); // Directorio donde se guardarán las imágenes
 
-const productsFilePath = "./api/data/productos.json";
+const productsFilePath = "./src/api/data/products.json";
 const getProducts = () => JSON.parse(fs.readFileSync(productsFilePath));
 const saveProducts = (products) => fs.writeFileSync(productsFilePath, JSON.stringify(products, null, 2));
 
